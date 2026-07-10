@@ -50,16 +50,7 @@ def scrape_article_content(url):
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Save Original HTML to local storage (optional step in flow)
-        try:
-            import hashlib
-            raw_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "storage", "raw_html")
-            os.makedirs(raw_dir, exist_ok=True)
-            file_name = hashlib.md5(url.encode()).hexdigest() + ".html"
-            with open(os.path.join(raw_dir, file_name), "w", encoding="utf-8") as f:
-                f.write(response.text)
-        except Exception:
-            pass
+        
             
         # Basic article text extraction - usually paragraphs are a safe bet
         paragraphs = soup.find_all('p')

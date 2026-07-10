@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from database.dbConnection import get_mysql_connection
-from services.llm_processor import generate_rag_response
+from services.llm_processor import call_llm_chat
+from prompts import get_rag_system_prompt
 from utils.logger import sys_logger
 
 def handle_chat():
@@ -55,7 +56,7 @@ def handle_chat():
 
     # 2. Semantic Search & Combined Retrieval Flow
     try:
-        from database.chromaConnection import get_chroma_collection
+        from database.dbConnection import get_chroma_collection
         collection = get_chroma_collection()
         
         # Query ChromaDB for top 5 semantically similar documents (can be articles or Wikipedia search summaries)
@@ -142,7 +143,14 @@ def handle_chat():
         
     # 4. Call the LLM to generate the RAG response
     sys_logger.log(f"Querying LLM with context length: {len(context)}", level="INFO")
-    response = generate_rag_response(user_message, context)
+    system_prompt = get_rag_system_prompt(context)
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_message}
+    ]
+    response = call_llm_chat(messages)
+    if not response:
+        response = "I'm currently unable to process your request. Please try again later."
     
     # Check if the LLM response is a refusal/unavailability message
     refusal_keywords = [

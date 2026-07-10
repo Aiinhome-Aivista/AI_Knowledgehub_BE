@@ -1,4 +1,5 @@
-from flask import jsonify
+import os
+from flask import jsonify, send_file
 from database.dbConnection import get_arango_db
 
 def handle_graph_data():
@@ -144,3 +145,9 @@ def handle_graph_data():
         return jsonify({"nodes": nodes_list, "edges": edges_list})
     except Exception as e:
         return jsonify({"error": str(e), "nodes": [], "edges": []})
+
+def handle_view_graph():
+    # Since graphController.py is in controllers/ directory, graph.html is one level up
+    api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return send_file(os.path.join(api_dir, "graph.html"))
+

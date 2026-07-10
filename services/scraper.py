@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import os
-from .llm_processor import extract_proper_nouns
 
 def fetch_rss_feed(feed_url):
     """
@@ -71,49 +70,3 @@ def scrape_article_content(url):
         from utils.logger import sys_logger
         sys_logger.log(f"Scraper error for {url}: {e}", level="ERROR")
         return ""
-
-def process_source(url, is_rss=False):
-    """
-    Given a URL, scrapes it, processes text, and extracts proper nouns using LLM.
-    Returns processed data.
-    """
-    results = []
-    
-    if is_rss:
-        entries = fetch_rss_feed(url)
-        for entry in entries[:3]: # Process only the first 3 articles in the feed
-            content = scrape_article_content(entry['link'])
-            
-            # Fallback to RSS summary if scraping the full article gets blocked
-            if not content and entry.get('summary'):
-                content = entry['summary']
-                
-            if content:
-                # Limit content size for LLM extraction
-                short_content = content[:2000]
-                proper_nouns_data = extract_proper_nouns(short_content)
-                
-                results.append({
-                    "title": entry["title"],
-                    "url": entry["link"],
-                    "content": content,
-                    "published": entry.get("published", ""),
-                    "extracted_topics": proper_nouns_data.get("proper_nouns", [])
-                })
-    else:
-        content = scrape_article_content(url)
-        if content:
-            short_content = content[:2000]
-            proper_nouns_data = extract_proper_nouns(short_content)
-            
-            import datetime
-            now_str = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
-            results.append({
-                "title": "Direct URL Scraping",
-                "url": url,
-                "content": content,
-                "published": now_str,
-                "extracted_topics": proper_nouns_data.get("proper_nouns", [])
-            })
-            
-    return results

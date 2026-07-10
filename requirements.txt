@@ -1,0 +1,11 @@
+Flask
+Flask-Cors
+python-dotenv
+mysql-connector-python
+python-arango
+chromadb
+feedparser
+requests
+beautifulsoup4
+apscheduler
+cloudscraper

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Knowledge Hub - Knowledge Graph</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style type="text/css">
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #header {
+            padding: 15px;
+            background-color: #1e293b;
+            border-bottom: 2px solid #334155;
+            text-align: center;
+        }
+        #mynetwork {
+            width: 100vw;
+            height: calc(100vh - 80px);
+            background-color: #0f172a;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1 style="margin:0;font-size:24px;color:#38bdf8;">AI Knowledge Hub - Dynamic Knowledge Graph</h1>
+        <p style="margin:5px 0 0 0;font-size:14px;color:#94a3b8;">Drag nodes to interact. Zoom in/out. Refresh the page to reload database changes instantly.</p>
+    </div>
+    <div id="loading">Connecting to Database and Loading Graph...</div>
+    <div id="mynetwork"></div>
+
+    <script type="text/javascript">
+        // Fetch dynamic graph data from the running Flask local server
+        fetch('http://localhost:5000/api/graph-data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (!data.nodes || data.nodes.length === 0) {
+                    document.getElementById('loading').innerText = "Knowledge Graph is Empty! (No entities found in ArangoDB)";
+                    document.getElementById('loading').style.display = 'block';
+                    return;
+                }
+                
+                var nodes = new vis.DataSet(data.nodes);
+                var edges = new vis.DataSet(data.edges);
+
+                var container = document.getElementById('mynetwork');
+                var graphData = {
+                    nodes: nodes,
+                    edges: edges
+                };
+                var options = {
+                    nodes: {
+                        shape: 'dot',
+                        size: 16,
+                        font: {
+                            size: 14,
+                            color: '#ffffff'
+                        },
+                        borderWidth: 2
+                    },
+                    edges: {
+                        color: {
+                            color: '#475569',
+                            highlight: '#fb923c'
+                        },
+                        width: 1.5,
+                        font: {
+                            align: 'middle',
+                            color: '#94a3b8',
+                            size: 10,
+                            background: '#0f172a',
+                            strokeWidth: 0
+                        },
+                        arrows: {
+                            to: {
+                                enabled: true,
+                                scaleFactor: 0.8
+                            }
+                        },
+                        smooth: {
+                            type: 'continuous'
+                        }
+                    },
+                    physics: {
+                        barnesHut: {
+                            gravitationalConstant: -4000,
+                            centralGravity: 0.05,
+                            springLength: 220,
+                            springConstant: 0.04,
+                            damping: 0.09
+                        },
+                        stabilization: {
+                            iterations: 150
+                        }
+                    }
+                };
+                var network = new vis.Network(container, graphData, options);
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = "Error: Could not connect to Backend server! (Make sure 'py app.py' is running)";
+                console.error("Connection Error:", error);
+            });
+    </script>
+</body>
+</html>

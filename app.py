@@ -32,27 +32,27 @@ scheduler = None
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the UI
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     return handle_login()
 
-@app.route('/api/stream-logs')
+@app.route('/stream-logs')
 def stream_logs():
     return handle_stream_logs()
 
-@app.route('/api/health', methods=['GET'])
+@app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "running"})
+    return jsonify({"status": "running", "message":"Server is running", "status_code":200})
 
-@app.route('/api/topics', methods=['GET'])
+@app.route('/topics', methods=['GET'])
 def get_topics():
     return handle_topics()
 
-@app.route('/api/chat', methods=['POST'])
+@app.route('/chat', methods=['POST'])
 def chat():
     return handle_chat()
 
-@app.route('/api/graph-data', methods=['GET'])
+@app.route('/graph-data', methods=['GET'])
 def graph_data():
     return handle_graph_data()
 
@@ -60,31 +60,31 @@ def graph_data():
 def view_graph():
     return handle_view_graph()
 
-@app.route('/api/connectors', methods=['GET', 'POST'])
+@app.route('/connectors', methods=['GET', 'POST'])
 def handle_api_connectors_route():
     return handle_api_connectors()
 
-@app.route('/api/articles', methods=['GET'])
+@app.route('/articles', methods=['GET'])
 def get_articles():
     return handle_get_articles()
 
-@app.route('/api/ingestion-logs', methods=['GET'])
+@app.route('/ingestion-logs', methods=['GET'])
 def get_ingestion_logs():
     return handle_get_ingestion_logs()
 
-@app.route('/api/landing-data', methods=['GET'])
+@app.route('/landing-data', methods=['GET'])
 def get_landing_data():
     return handle_get_landing_data()
 
-@app.route('/api/trigger-scrape', methods=['POST'])
+@app.route('/trigger-scrape', methods=['POST'])
 def trigger_scrape():
     return handle_trigger_scrape()
 
-@app.route('/api/scheduler-status', methods=['GET'])
+@app.route('/scheduler-status', methods=['GET'])
 def scheduler_status():
     return handle_scheduler_status(scheduler)
 
-@app.route('/api/scheduler-logs', methods=['GET'])
+@app.route('/scheduler-logs', methods=['GET'])
 def get_scheduler_logs():
     return handle_get_scheduler_logs()
 

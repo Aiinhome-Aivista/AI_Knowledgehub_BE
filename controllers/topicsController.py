@@ -7,7 +7,7 @@ def handle_topics():
     """
     conn = get_mysql_connection()
     if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
+        return jsonify({"status": "error", "message": "Database connection failed", "status_code": 500})
         
     try:
         cursor = conn.cursor(dictionary=True)
@@ -15,7 +15,7 @@ def handle_topics():
         topics = cursor.fetchall()
         cursor.close()
         conn.close()
-        return jsonify(topics)
+        return jsonify({"status": "success", "message":"Topics fetched successfully", "status_code":200, "data":topics})
     except Exception as e:
         print(f"Error fetching topics: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "error", "message": str(e), "status_code": 500})

@@ -5,7 +5,13 @@ from database.dbConnection import get_arango_db
 def handle_graph_data():
     db = get_arango_db()
     if not db:
-        return jsonify({"nodes": [], "edges": []})
+        return jsonify({
+    "status": "error", 
+    "message": "Database connection failed", 
+    "status_code": 500, 
+    "data": {"nodes": [], "edges": []}
+})
+
         
     try:
         collection_name = "ai_hub_entities"
@@ -142,9 +148,18 @@ def handle_graph_data():
                 "arrows": "to"
             })
             
-        return jsonify({"nodes": nodes_list, "edges": edges_list})
+        return jsonify({
+    "status": "success", 
+    "message": "Graph data fetched successfully", 
+    "status_code": 200, 
+    "data": {
+        "nodes": nodes_list, 
+        "edges": edges_list
+    }
+})
+
     except Exception as e:
-        return jsonify({"error": str(e), "nodes": [], "edges": []})
+        return jsonify({"status": "error", "message": str(e), "status_code": 500, "data": {"nodes": [], "edges": []}})
 
 def handle_view_graph():
     # Since graphController.py is in controllers/ directory, graph.html is one level up

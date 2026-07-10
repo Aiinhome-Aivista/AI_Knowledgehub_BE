@@ -63,5 +63,11 @@ def handle_get_landing_data():
             pass
     except Exception as e:
         sys_logger.log(f"Failed to fetch landing page data: {e}", level="ERROR")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+    "status": "error", 
+    "message": str(e), 
+    "status_code": 500, 
+    "data": db_data
+})
+
     return jsonify(db_data)

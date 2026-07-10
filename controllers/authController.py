@@ -7,11 +7,11 @@ def handle_login():
     password = data.get("password", "")
     
     if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+        return jsonify({"status": "error", "message":"Email and password are required", "status_code":400})
         
     conn = get_mysql_connection()
     if not conn:
-        return jsonify({"error": "Database connection error"}), 500
+        return jsonify({"status": "error", "message":"Database connection error", "status_code":500})
         
     try:
         cursor = conn.cursor(dictionary=True)
@@ -26,8 +26,8 @@ def handle_login():
         conn.close()
         
         if user:
-            return jsonify({"status": "success", "role": user["role"], "name": user.get("name", "") or ""})
+            return jsonify({"status": "success", "message":"Login successfully", "status_code":200, "data":{"role": user["role"], "name": user.get("name", "") or ""}})
         else:
-            return jsonify({"error": "Invalid email or password. Access denied."}), 401
+            return jsonify({"status": "error", "message":"Invalid email or password. Access denied.", "status_code":401})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "error", "message":str(e), "status_code":500})

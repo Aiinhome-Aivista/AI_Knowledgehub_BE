@@ -11,7 +11,8 @@ def handle_chat():
     """
     data = request.json
     if not data or 'message' not in data:
-        return jsonify({"error": "Message is required"}), 400
+        return jsonify({"status": "error", "message": "Message is required", "status_code": 400})
+
         
     user_message = data['message']
     
@@ -164,5 +165,11 @@ def handle_chat():
         
     sys_logger.log("Generated RAG response successfully.", level="SUCCESS")
     
-    return jsonify({"response": response})
+    return jsonify({
+    "status": "success", 
+    "message": "Response generated successfully", 
+    "status_code": 200, 
+    "data": {"response": response}
+})
+
 

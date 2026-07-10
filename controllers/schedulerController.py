@@ -43,7 +43,13 @@ def handle_get_ingestion_logs():
                 "edges_added": row['edges_added'],
                 "errors": err_list
             })
-        return jsonify(logs)
+        return jsonify({
+    "status": "success", 
+    "message": "Ingestion logs fetched successfully", 
+    "status_code": 200, 
+    "data": logs
+})
+
     except Exception as e:
         sys_logger.log(f"Failed to fetch ingestion logs from DB: {e}", level="ERROR")
         return jsonify({"error": str(e)}), 500
@@ -157,10 +163,22 @@ def handle_get_scheduler_logs():
                 elif r.get(key) is None:
                     r[key] = None
             result.append(r)
-        return jsonify(result)
+        return jsonify({
+    "status": "success", 
+    "message": "Scheduler logs fetched successfully", 
+    "status_code": 200, 
+    "data": result
+})
+
     except Exception as e:
         sys_logger.log(f"Failed to fetch scheduler logs from DB: {e}", level="ERROR")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+    "status": "error", 
+    "message": str(e), 
+    "status_code": 500, 
+    "data": []
+})
+
 
 # ==========================================
 # 2. Scraping Pipeline Helpers & Sub-routines
@@ -1097,7 +1115,11 @@ def run_scraping_pipeline(triggered_by="scheduler"):
         except Exception as e:
             sys_logger.log(f"MySQL Error fetching active connectors: {e}", level="ERROR")
             task_errors.append(f"Connectors error: {str(e)}")
-            
+    
+    if not connectors:
+        sys_logger.log("No active connectors found in the database. Scraping pipeline skipped.", level="ERROR")
+        task_errors.append("No active connectors registered.")
+        
     rss_articles = []
     for conn in connectors:
         url = conn.get("url")

@@ -33,6 +33,12 @@ def get_arango_db():
         db_name = os.getenv("ARANGO_DB")
         user = os.getenv("ARANGO_USER")
         password = os.getenv("ARANGO_PASSWORD")
+
+        sys_db = client.db('_system', username=user, password=password)
+        if not sys_db.has_database(db_name):
+            sys_db.create_database(db_name)
+            print(f"Database '{db_name}' created successfully.")
+
         db = client.db(db_name, username=user, password=password)
         print("Successfully connected to ArangoDB.")
         return db

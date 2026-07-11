@@ -3,3 +3,5 @@ venv
 __pycache__
 vector_store
 raw_html
+graph
+chroma_store

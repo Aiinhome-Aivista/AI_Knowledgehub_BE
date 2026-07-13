@@ -68,7 +68,8 @@ def get_next_run_time(interval_hours):
         if next_run < now:
             return now + datetime.timedelta(seconds=5)
         return next_run
-    return now + datetime.timedelta(hours=interval_hours)
+    return now + datetime.timedelta(seconds=5)
+
 
 def daily_scraping_task(triggered_by="scheduler"):
     global _current_triggered_by

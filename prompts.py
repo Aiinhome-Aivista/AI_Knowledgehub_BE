@@ -1,32 +1,48 @@
 import json
 import datetime
 
-
-
-
 def get_extraction_prompt(text_content):
     return f"""
 You are an expert Named Entity Recognition (NER) system.
 
-Your task is to extract ONLY proper nouns (named entities) from the text.
+Your ONLY task is to extract real-world proper nouns explicitly mentioned in the text.
 
-A proper noun refers to a unique named entity such as:
+The text may contain English, Bengali, or mixed languages.
+
+IMPORTANT OBJECTIVE
+
+Your primary objective is PRECISION, not recall.
+
+If you are uncertain whether something is a proper noun, DO NOT extract it.
+
+It is better to miss an uncertain entity than to extract an incorrect one.
+
+Never infer, guess, complete, or hallucinate entities.
+
+Extract ONLY entities explicitly mentioned in the text.
+
+--------------------------------------------------
+WHAT COUNTS AS A PROPER NOUN
+--------------------------------------------------
+
+A proper noun is a unique named entity such as:
 
 - Person
 - Organization
 - Company
 - Government Body
+- Political Party
 - Country
+- State
 - City
-- State/Province
-- Region
+- Location
 - Building
 - Landmark
 - Product
 - Brand
 - Event
 - Sports Event
-- Tournament
+- Sports Team
 - Movie
 - TV Show
 - Book
@@ -34,234 +50,708 @@ A proper noun refers to a unique named entity such as:
 - Technology
 - Software
 - Programming Language
-- Currency
 - Law
 - Policy
 - Award
-- Scientific Discovery
+- Currency
 
-DO NOT extract:
+Named fictional characters also count as:
 
-- common nouns
-- professions
-- job titles alone
-- pronouns
-- adjectives
-- verbs
-- numbers
-- prices
-- dates
-- durations
-- measurements
-- generic words
-- "homeowners"
-- "regulator"
-- "punters"
-- "two years"
-- "people"
-- "government"
-- "company"
-- "country"
+Person
 
-If a title appears with a person's name:
+--------------------------------------------------
+GENERAL RULES
+--------------------------------------------------
 
-"President Donald Trump"
+- Extract ONLY entities explicitly mentioned.
+- Never infer missing information.
+- Never guess.
+- Never generate entities not present.
 
-extract only
+- Remove titles and honorifics.
 
-"Donald Trump"
+Examples:
 
-If a title appears with an organization:
+President Donald Trump
+→ Donald Trump
 
-"Prime Minister Keir Starmer"
+Prime Minister Narendra Modi
+→ Narendra Modi
 
-extract
+Dr. Anthony Fauci
+→ Anthony Fauci
 
-"Keir Starmer"
+--------------------------------------------------
 
-NOT
+Normalize abbreviations.
 
-"Prime Minister"
+US
+USA
+U.S.
+→ United States
 
-Normalize entities.
+UK
+U.K.
+→ United Kingdom
 
-Example:
+--------------------------------------------------
 
-US -> United States
+Keep ONLY the most complete name.
 
-USA -> United States
+Correct:
 
-UK -> United Kingdom
+Donald Trump
 
-Do not output duplicates.
+Wrong:
 
-Return ONLY valid JSON.
+Trump
 
-Output format:
+Correct:
+
+Serena Williams
+
+Wrong:
+
+Williams
+
+Correct:
+
+Olly Robbins
+
+Wrong:
+
+Olly
+
+--------------------------------------------------
+
+Never attach generic descriptors.
+
+Correct:
+
+AFP
+
+Wrong:
+
+AFP News Agency
+
+Correct:
+
+BBC
+
+Wrong:
+
+BBC News
+
+--------------------------------------------------
+
+If both a short name and full name exist,
+return ONLY the complete version.
+
+Example
+
+Donald Trump
+
+Trump
+
+↓
+
+Donald Trump
+
+--------------------------------------------------
+
+If both an abbreviation and official full name appear,
+return ONLY ONE canonical entity.
+
+Examples
+
+AFP + Agence France-Presse
+
+↓
+
+Agence France-Presse
+
+WHO + World Health Organization
+
+↓
+
+World Health Organization
+
+UN + United Nations
+
+↓
+
+United Nations
+
+--------------------------------------------------
+STRICT CATEGORY RULE
+--------------------------------------------------
+
+Each entity MUST have EXACTLY ONE category.
+
+Use ONLY categories listed below.
+
+Never invent categories.
+
+Never combine categories.
+
+Wrong:
+
+Event, Sports Event
+
+Character
+
+News Agency
+
+Political Group
+
+Rail Company
+
+Right:
+
+Sports Event
+
+Organization
+
+Company
+
+Other
+
+--------------------------------------------------
+
+Sports clubs MUST ALWAYS be:
+
+Sports Team
+
+Examples
+
+Manchester United
+
+Chelsea
+
+Liverpool
+
+Real Madrid
+
+Barcelona
+
+PSG
+
+Tottenham Hotspur
+
+Aston Villa
+
+Atalanta
+
+--------------------------------------------------
+
+Media organizations MUST ALWAYS be:
+
+Organization
+
+Examples
+
+AFP
+
+BBC
+
+Reuters
+
+The Sun
+
+Associated Press
+
+CNN
+
+--------------------------------------------------
+
+Official government agencies, intelligence agencies,
+military organizations and ministries MUST ALWAYS be:
+
+Government Body
+
+Examples
+
+FBI
+
+CIA
+
+GRU
+
+IRGC
+
+Ministry of Defence
+
+--------------------------------------------------
+
+Named sports tournaments MUST ALWAYS be:
+
+Sports Event
+
+Examples
+
+World Cup
+
+Brazil World Cup
+
+Wimbledon
+
+French Open
+
+US Open
+
+The Hundred
+
+Olympics
+
+Champions League
+
+--------------------------------------------------
+
+Named AI models, operating systems, software products and applications MUST ALWAYS be:
+
+Software
+
+Examples
+
+ChatGPT
+
+Grok
+
+Windows
+
+Photoshop
+
+Microsoft Office
+
+--------------------------------------------------
+
+Branded divisions inherit their parent category.
+
+Examples
+
+BBC Sport
+
+→ Organization
+
+Microsoft Research
+
+→ Company
+
+Google DeepMind
+
+→ Company
+
+--------------------------------------------------
+
+Product-selling businesses MUST ALWAYS be:
+
+Company
+
+Examples
+
+Google
+
+Amazon
+
+Microsoft
+
+Apple
+
+Tesla
+
+Samsung
+
+Meta
+
+--------------------------------------------------
+
+Fictional characters MUST ALWAYS be:
+
+Person
+
+Examples
+
+Harry Potter
+
+Sherlock Holmes
+
+Darth Vader
+
+Thotsakan
+
+--------------------------------------------------
+
+If an entity clearly does not fit any allowed category,
+use:
+
+Other
+
+ONLY if it is unquestionably a proper noun.
+
+--------------------------------------------------
+STRICT EXCLUSION RULE
+--------------------------------------------------
+
+NEVER extract
+
+- Dates
+- Years
+- Months
+- Times
+- Prices
+- Percentages
+- Quantities
+- Measurements
+- Numbers
+
+--------------------------------------------------
+
+Never extract
+
+Nationalities
+
+Demonyms
+
+Examples
+
+British
+
+American
+
+Indian
+
+French
+
+Pakistani
+
+Bangladeshi
+
+--------------------------------------------------
+
+Never extract
+
+Common nouns
+
+Generic concepts
+
+Generic descriptions
+
+Job titles
+
+Pronouns
+
+Section headings
+
+Menu items
+
+--------------------------------------------------
+
+Never extract generic medical terms.
+
+Examples
+
+Chemotherapy
+
+Radiotherapy
+
+Cancer
+
+Diabetes
+
+Influenza
+
+Heart Disease
+
+Medical Report
+
+--------------------------------------------------
+
+Never extract
+
+generic technologies
+
+generic government references
+
+generic organizations
+
+Examples
+
+technology
+
+government
+
+company
+
+internet
+
+website
+
+software
+
+employee
+
+people
+
+market
+
+--------------------------------------------------
+
+Never extract incomplete person names if the complete name exists.
+
+Wrong
+
+Trump
+
+Williams
+
+Jones
+
+Bell
+
+Olly
+
+Right
+
+Donald Trump
+
+Serena Williams
+
+Olly Robbins
+
+--------------------------------------------------
+STRICT DEDUPLICATION RULE
+--------------------------------------------------
+
+Each unique entity appears ONLY ONCE.
+
+Merge
+
+US
+
+USA
+
+United States
+
+↓
+
+United States
+
+Merge
+
+Trump
+
+President Trump
+
+Donald Trump
+
+↓
+
+Donald Trump
+
+Merge
+
+ভারত
+
+India
+
+↓
+
+India
+
+--------------------------------------------------
+ALLOWED CATEGORIES
+--------------------------------------------------
+
+Person
+
+Organization
+
+Company
+
+Sports Team
+
+Government Body
+
+Political Party
+
+Country
+
+State
+
+City
+
+Location
+
+Building
+
+Landmark
+
+Product
+
+Brand
+
+Event
+
+Sports Event
+
+Movie
+
+TV Show
+
+Book
+
+Song
+
+Technology
+
+Software
+
+Programming Language
+
+Law
+
+Policy
+
+Award
+
+Currency
+
+Other
+
+--------------------------------------------------
+FINAL VALIDATION
+--------------------------------------------------
+
+Before returning JSON perform a final review.
+
+For EVERY entity verify:
+
+1. Is it explicitly mentioned?
+
+2. Is it a real proper noun?
+
+3. Is it the most complete form?
+
+4. Is there a longer version elsewhere?
+
+5. Is the category correct?
+
+6. Is it duplicated?
+
+7. Is it actually a common noun?
+
+8. Is it a disease?
+
+9. Is it a treatment?
+
+10. Is it a nationality?
+
+11. Is it only a title?
+
+12. If uncertain, REMOVE it.
+
+Only after this validation generate the final JSON.
+
+--------------------------------------------------
+OUTPUT FORMAT
+--------------------------------------------------
+
+Return ONLY raw JSON.
+
+No markdown.
+
+No explanation.
+
+No code fences.
+
+No preamble.
+
+If no entities exist return exactly
+
+{{"proper_nouns":[]}}
+
+Schema
 
 {{
-  "proper_nouns": [
+  "proper_nouns":[
     {{
-      "name": "",
-      "category": ""
+      "name":"",
+      "category":""
     }}
   ]
 }}
 
-Categories must be one of:
-
-Person
-Organization
-Company
-Location
-Country
-City
-Product
-Brand
-Event
-Movie
-Book
-Song
-Technology
-Software
-Sports Event
-Award
-Law
-Policy
-Currency
-Other
-
-Text:
+--------------------------------------------------
+TEXT
+--------------------------------------------------
 
 {text_content}
 """
 
+
+
 # def get_extraction_prompt(text_content):
 #     return f"""
-# You are an expert Named Entity Recognition (NER) engine.
+# You are an expert Named Entity Recognition (NER) system.
 
-# Extract ONLY named entities.
+# Extract ONLY real-world proper nouns explicitly mentioned in the text below (text may be in English, Bengali, or mixed language).
 
-# A named entity is a unique name of:
+# A proper noun is a unique named entity such as a person, organization, company, government body, political party, country, state, city, location, landmark, building, product, brand, event, sports event, sports team, movie, TV show, book, song, technology, software, programming language, law, policy, award, or currency. Fictional characters from movies/TV/books also count as "Person".
 
-# - Person
-# - Organization
-# - Company
-# - Country
-# - City
-# - State
-# - Region
-# - Landmark
-# - Product
-# - Brand
-# - Event
-# - Movie
-# - Book
-# - Song
-# - Technology
-# - Software
+# GENERAL RULES:
+# - Extract only entities explicitly mentioned in the text. Do NOT infer, guess, or generate entities not present.
+# - Remove titles/honorifics from person names (e.g., "President Donald Trump" → "Donald Trump").
+# - Normalize abbreviations: US/USA → United States, UK → United Kingdom.
+# - Keep only the most complete form of a name (e.g., "Donald Trump" not "Trump").
+# - Strip trailing punctuation (periods, commas, quotes) from every extracted name.
+# - Do NOT attach generic descriptive words to a name (e.g., "AFP news agency" → "AFP").
+# - Fictional characters (e.g., "Dani Rojas" from Ted Lasso) → category "Person", NOT a new category.
 
-# DO NOT extract:
+# STRICT CATEGORY RULE (VERY IMPORTANT — READ CAREFULLY):
+# - Each entity gets EXACTLY ONE category from the "Allowed categories" list below, spelled EXACTLY as written.
+# - NEVER invent, modify, combine, or comma-join category names.
+#   WRONG: "Event, Sports Event", "Demonym", "Year", "Character", "News Agency"
+#   RIGHT: Pick the single closest match from the allowed list, or use "Other".
+# - Sports clubs/teams (e.g., Manchester United, Aston Villa, Real Madrid, Atalanta, Barcelona, PSG, Chelsea, Liverpool) MUST ALWAYS be "Sports Team" — NEVER "Company" or "Organization", with NO exceptions, even if the text describes them commercially.
+# - Media outlets (AFP, BBC, The Sun, Reuters) → "Organization".
+# - Product-selling businesses (Tesla, Samsung, Google) → "Company".
+# - Named tournaments/competitions (e.g., "World Cup", "Brazil World Cup", "Champions League Final") → "Sports Event" (not "Event", not multi-category).
+# - If genuinely unclear, use "Other" — never a comma-joined or made-up label.
 
-# - Common nouns
-# - Professions
-# - Job titles
-# - Roles
-# - Money
-# - Dates
-# - Numbers
-# - Percentages
-# - Quantities
-# - Time expressions
-# - Generic descriptions
-# - Adjectives
+# STRICT EXCLUSION RULE (DO NOT EXTRACT — NO EXCEPTIONS):
+# - Standalone years, dates, months, times, numbers, prices, percentages, quantities (e.g., "2026", "45%", "£10,000") — these are NEVER entities, regardless of context.
+# - Nationalities/demonyms (e.g., "British", "American", "Indian", "Laotian") — NEVER extract these, even if capitalized.
+# - Common nouns, generic systems (internet, government, technology) unless part of a specific proper name.
+# - Job titles, pronouns, generic descriptions, section headings, menu items.
+# - Generic events (war, meeting, election, festival) UNLESS a specific named event/tournament is mentioned.
 
-# Examples of INVALID entities:
+# STRICT DEDUPLICATION RULE:
+# - Each unique real-world entity appears ONLY ONCE, regardless of repetition in the text.
+# - Merge same entity across scripts/forms/titles into ONE normalized English name (e.g., "ভারত"/"India" → "India"; "President Trump"/"Trump" → "Donald Trump").
+# - Before finalizing, re-scan your own draft list for duplicates or inconsistent categorization of the SAME entity type (e.g., if one football club is "Sports Team", every other football club in the list must also be "Sports Team" — never mix).
 
-# homeowners
-# regulator
-# punters
-# two years
-# £45
-# millionaire
-# government
-# company
-# people
+# Allowed categories (use EXACTLY these labels, no others, no combinations):
+# Person, Organization, Company, Sports Team, Government Body, Political Party, Country, State, City, Location, Building, Landmark, Product, Brand, Event, Sports Event, Movie, TV Show, Book, Song, Technology, Software, Programming Language, Law, Policy, Award, Currency, Other
 
-# If an entity contains a title:
+# OUTPUT FORMAT (STRICT):
+# - Respond with RAW JSON only. No markdown, no code fences, no explanation, no preamble, no trailing text.
+# - If no entities are found, return exactly: {{"proper_nouns": []}}
+# - Follow this exact schema:
 
-# President Donald Trump
-
-# extract ONLY
-
-# Donald Trump
-
-# Prime Minister Keir Starmer
-
-# extract ONLY
-
-# Keir Starmer
-
-# US -> United States
-
-# UK -> United Kingdom
-
-# Return ONLY JSON.
-
-# {
-#     "proper_nouns":[
-#         {
-#             "name":"",
-#             "category":""
-#         }
-#     ]
-# }
+# {{
+#   "proper_nouns": [
+#     {{
+#       "name": "",
+#       "category": ""
+#     }}
+#   ]
+# }}
 
 # Text:
-
 # {text_content}
 # """
 
 
-# def get_extraction_prompt(text_content):
-#     return f"""
-#     You are an expert Named Entity Recognition (NER) model.
-#     Your task is to extract all Proper Nouns (named entities) from the provided text.
-    
-#     A proper noun represents a specific, unique person, organization, location, product, technology, brand, or event.
-    
-#     Guidelines:
-#     1. Extract ONLY proper nouns that are explicitly mentioned in the text.
-#     2. Do NOT extract common nouns (e.g., "internet", "website", "computer", "users", "police", "officer").
-#     3. Proper nouns in English are capitalized (e.g., "Tim Berners-Lee", "World Wide Web", "CERN", "HTTP", "HTML").
-#     4. Return the output STRICTLY in JSON format. Do not add any conversational text or markdown formatting.
-    
-#     Output JSON format:
-#     {{
-#       "proper_nouns": [
-#         {{"name": "Entity Name", "category": "Person/Organization/Location/Product/Technology/Event"}}
-#       ]
-#     }}
-    
-#     Text content to extract:
-#     "{text_content}"
-#     """
-
-# def get_extraction_prompt(text_content):
-#     return f"""
-#     You are an NLP model designed to extract proper nouns (people, organizations, locations, products, events) from the given text.
-#     Your output MUST be strictly in JSON format. Do not include any conversational text or markdown formatting outside of the JSON block.
-    
-#     The JSON should follow this structure:
-#     {{
-#         "proper_nouns": [
-#             {{"name": "...", "category": "Person/Organization/Location/Product/Event"}}
-#         ]
-#     }}
-
-#     Text:
-#     "{text_content}"
-#     """
 
 def get_rag_system_prompt(context):
     current_date = datetime.datetime.now().strftime("%A, %B %d, %Y")

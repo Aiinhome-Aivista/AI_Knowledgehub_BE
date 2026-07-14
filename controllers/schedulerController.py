@@ -195,12 +195,11 @@ def get_scheduler_next_run():
 def extract_proper_nouns(text):
     from prompts import get_extraction_prompt
     from services.llm_processor import call_llm_generate
+    from utils.post_processor import post_process_proper_nouns
     prompt = get_extraction_prompt(text)
     raw_output = call_llm_generate(prompt, format_json=True)
-    try:
-        return json.loads(raw_output)
-    except Exception:
-        return {"proper_nouns": []}
+    return post_process_proper_nouns(raw_output)
+
 
 def extract_entities_and_relationships(text):
     from prompts import get_graph_extraction_prompt

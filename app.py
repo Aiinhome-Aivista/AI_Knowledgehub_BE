@@ -112,4 +112,4 @@ if __name__ == '__main__':
     sys_logger.log(f"Scheduler initialized directly in app.py to run every {interval} hours. Next automated run scheduled for: {start_time.strftime('%Y-%m-%d %H:%M:%S')}.", level="SYSTEM")
     
     # Start Flask application with debug=True
-    app.run(host="0.0.0.0", port=5003, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

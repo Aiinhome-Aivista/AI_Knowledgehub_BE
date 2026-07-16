@@ -26,8 +26,15 @@ def handle_login():
         conn.close()
         
         if user:
-            return jsonify({"status": "success", "message":"Login successfully", "status_code":200, "data":{"role": user["role"], "name": user.get("name", "") or ""}})
+            return jsonify({
+                "status": "success",
+                "message": "Login successfully",
+                "status_code": 200,
+                "role": user["role"],
+                "name": user.get("name", "") or "",
+                "data": {"role": user["role"], "name": user.get("name", "") or ""}
+            })
         else:
-            return jsonify({"status": "error", "message":"Invalid email or password. Access denied.", "status_code":401})
+            return jsonify({"status": "error", "message": "Invalid email or password. Access denied.", "status_code": 401})
     except Exception as e:
         return jsonify({"status": "error", "message":str(e), "status_code":500})
